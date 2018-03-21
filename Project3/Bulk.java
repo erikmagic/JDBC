@@ -19,7 +19,7 @@ public class Bulk {
 	static private Connection con;
 	static private String user = "cs421g44";
 	// put valid password before running
-	static private String pwd = "Quebec.libre1!";	
+	static private String pwd = "######";	
 
 
 	public static void main(String[] args) {
