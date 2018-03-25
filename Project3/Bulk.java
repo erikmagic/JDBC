@@ -10,6 +10,11 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Scanner;
 
+import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.ChartFactory; 
+import org.jfree.chart.JFreeChart; 
+import org.jfree.data.general.DefaultPieDataset;
+
 public class Bulk {
 	
 	// global variables 
@@ -54,20 +59,24 @@ public class Bulk {
 			else if (choice == 5) {
 				getClientEmail();
 			}
+			else if (choice == 6) {
+				visualise();
+			}
 			
-			if (choice != 6 ) {
+			if (choice != 7 ) {
 				System.out.println("Continue? [Press anything]");
 				sc.nextLine();				
 			}
 
 			
-		} while (choice != 6);
+		} while (choice != 7);
 		
 		
 		System.out.println("Exiting...");
 		
 	}
 	
+
 
 	static void getClientEmail(){
 		
@@ -449,18 +458,11 @@ public class Bulk {
 		
 	}
 
-	
-	
-	static int askOption(){
-		
+	static void visualise() {
 		System.out.println("Your options are: ");
-		System.out.println("1. Add a client");
-		System.out.println("2: Create a new booking for a client");
-		System.out.println("3: Check all flights below 100$");
-		System.out.println("4: List hotels, restaurants and activities in a city");
-		System.out.println("5: Get the email of a client");
-		System.out.println("6: Exit");
-		System.out.println("Please select an option between 1 and 6");
+		System.out.println("1. Pie chart of hotel locations");
+		System.out.println("2: Line graph of flight costs against time");
+		System.out.println("Please select an option between 1 and 2");
 		int selected = -1;
 		
 		boolean notified = false;
@@ -472,13 +474,95 @@ public class Bulk {
 
 			} catch (Exception e) {
 				selected = -1;
-				System.out.println("Please select an option from integer 1 to 6");
+				System.out.println("Please select an option from integer 1 to 2");
 				notified = true;
 			}
 			
-			if ((selected < 1 || selected > 6) && !notified) {
+			if ((selected < 1 || selected > 2) && !notified) {
 				selected = -1;
-				System.out.println("Please select an option between 1 and 6");
+				System.out.println("Please select an option between 1 and 2");
+			}
+			notified = false;
+		}
+
+		if (selected == 1) {
+			makePieChart();
+		}
+		else if (selected == 2) {
+			makeLineGraph();
+		}
+	}
+
+	static void makePieChart() {
+
+		try {
+			con = DriverManager.getConnection(url, user, pwd);
+			Statement stat = con.createStatement();
+			
+			String query = "select city, count(*) from hotel group by city";
+			
+			ResultSet resultSet = stat.executeQuery(query);
+			// close
+			stat.close();
+			con.close();
+
+			DefaultPieDataset dataset = new DefaultPieDataset( );
+			
+			while( resultSet.next( ) ) {
+			dataset.setValue( 
+			resultSet.getString( "city" ) ,
+			Double.parseDouble( resultSet.getString( "count(*)" )));
+			}
+			
+			JFreeChart chart = ChartFactory.createPieChart(
+			"Hotel locations",   // chart title           
+			dataset,          // data           
+			true,             // include legend          
+			true,           
+			false );
+	
+			int width = 560;    /* Width of the image */
+			int height = 370;   /* Height of the image */ 
+			File pieChart = new File( "Pie_Chart.jpeg" );
+			ChartUtilities.saveChartAsJPEG( pieChart , chart , width , height );
+			
+		} catch (SQLException e) {
+			System.out.println("Error connecting to db");
+			System.out.println(e.getMessage());
+		}	
+	}
+
+	static void makeLineGraph(){}
+	
+	static int askOption(){
+		
+		System.out.println("Your options are: ");
+		System.out.println("1. Add a client");
+		System.out.println("2: Create a new booking for a client");
+		System.out.println("3: Check all flights below 100$");
+		System.out.println("4: List hotels, restaurants and activities in a city");
+		System.out.println("5: Get the email of a client");
+		System.out.println("6: Print graphs ");
+		System.out.println("7: Exit");
+		System.out.println("Please select an option between 1 and 7");
+		int selected = -1;
+		
+		boolean notified = false;
+		
+		while (selected < 0)
+		{
+			try {
+				selected = Integer.parseInt(sc.nextLine());
+
+			} catch (Exception e) {
+				selected = -1;
+				System.out.println("Please select an option from integer 1 to 7");
+				notified = true;
+			}
+			
+			if ((selected < 1 || selected > 7) && !notified) {
+				selected = -1;
+				System.out.println("Please select an option between 1 and 7");
 			}
 			notified = false;
 		}
