@@ -8,12 +8,19 @@ import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.Scanner;
+import java.io.*;
 
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.ChartFactory; 
 import org.jfree.chart.JFreeChart; 
 import org.jfree.data.general.DefaultPieDataset;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.data.xy.XYDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 public class Bulk {
 	
@@ -24,7 +31,7 @@ public class Bulk {
 	static private Connection con;
 	static private String user = "cs421g44";
 	// put valid password before running
-	static private String pwd = "######";	
+	static private String pwd = "Quebec.libre1!";	
 
 
 	public static void main(String[] args) {
@@ -461,12 +468,32 @@ public class Bulk {
 	static void visualise() {
 		System.out.println("Your options are: ");
 		System.out.println("1. Pie chart of hotel locations");
-		System.out.println("2: Line graph of flight costs against time");
-		System.out.println("Please select an option between 1 and 2");
+		System.out.println("2: Scatter Plot of flight costs against month");
+		System.out.println("3: Exit");
+		System.out.println("Please select an option between 1 and 3");
 		int selected = -1;
-		
+		do {
+			selected = visualiseHelper();
+
+			if (selected == 1) {
+				makePieChart();
+			}
+			else if (selected == 2) {
+				makeScatterPlot();
+				System.out.println("test1");
+			}
+			if (selected != 3 ) {
+				System.out.println("Continue? [Press anything]");
+				sc.nextLine();	
+			}
+		} while (selected !=3);
+		System.out.println("Exiting...");
+
+	}
+
+	static int visualiseHelper() {
 		boolean notified = false;
-		
+		int selected = -1;
 		while (selected < 0)
 		{
 			try {
@@ -474,23 +501,17 @@ public class Bulk {
 
 			} catch (Exception e) {
 				selected = -1;
-				System.out.println("Please select an option from integer 1 to 2");
+				System.out.println("Please select an option from integer 1 to 3");
 				notified = true;
 			}
 			
-			if ((selected < 1 || selected > 2) && !notified) {
+			if ((selected < 1 || selected > 3) && !notified) {
 				selected = -1;
-				System.out.println("Please select an option between 1 and 2");
+				System.out.println("Please select an option between 1 and 3");
 			}
 			notified = false;
 		}
-
-		if (selected == 1) {
-			makePieChart();
-		}
-		else if (selected == 2) {
-			makeLineGraph();
-		}
+		return selected;
 	}
 
 	static void makePieChart() {
@@ -499,7 +520,7 @@ public class Bulk {
 			con = DriverManager.getConnection(url, user, pwd);
 			Statement stat = con.createStatement();
 			
-			String query = "select city, count(*) from hotel group by city";
+			String query = "select country, count(*) as counts from hotel group by country";
 			
 			ResultSet resultSet = stat.executeQuery(query);
 			// close
@@ -511,7 +532,7 @@ public class Bulk {
 			while( resultSet.next( ) ) {
 			dataset.setValue( 
 			resultSet.getString( "city" ) ,
-			Double.parseDouble( resultSet.getString( "count(*)" )));
+			Double.parseDouble( resultSet.getString( "counts" )));
 			}
 			
 			JFreeChart chart = ChartFactory.createPieChart(
@@ -524,7 +545,11 @@ public class Bulk {
 			int width = 560;    /* Width of the image */
 			int height = 370;   /* Height of the image */ 
 			File pieChart = new File( "Pie_Chart.jpeg" );
-			ChartUtilities.saveChartAsJPEG( pieChart , chart , width , height );
+			try {
+				ChartUtilities.saveChartAsJPEG( pieChart , chart , width , height );
+			} catch (Exception e) {
+				System.err.println(e.getMessage());
+			}
 			
 		} catch (SQLException e) {
 			System.out.println("Error connecting to db");
@@ -532,7 +557,59 @@ public class Bulk {
 		}	
 	}
 
-	static void makeLineGraph(){}
+	static void makeScatterPlot(){
+		System.out.println("Test");
+		try {
+			con = DriverManager.getConnection(url, user, pwd);
+			Statement stat = con.createStatement();
+			
+			String query = "select departingdate, price from flight";
+			
+			ResultSet resultSet = stat.executeQuery(query);
+			// close
+			stat.close();
+			con.close();
+
+			XYDataset dataset = createXYDataset(resultSet);
+			
+			JFreeChart chart = ChartFactory.createScatterPlot(
+			"Flight cost against month",
+			"X-Axis", "Y-Axis", dataset
+			);
+
+			int width = 560;    /* Width of the image */
+			int height = 370;   /* Height of the image */ 
+			File scatterPlot = new File( "Scatter_Plot.jpeg" );
+			try {
+				ChartUtilities.saveChartAsJPEG( scatterPlot , chart , width , height );
+			} catch (Exception e) {
+				System.err.println(e.getMessage());
+			}
+		
+		} catch (SQLException e) {
+			System.out.println("Error connecting to db");
+			System.out.println(e.getMessage());
+		}	
+	}
+
+	static XYDataset createXYDataset(ResultSet resultSet) {
+		XYSeriesCollection dataset = new XYSeriesCollection();
+		DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+		XYSeries series = new XYSeries("flights");
+
+		try {
+		while( resultSet.next( ) ) {
+			series.add( 
+			(df.parse(resultSet.getString( "departingdate" )).getMonth()),
+			Double.parseDouble( resultSet.getString( "price" )));
+		}
+		dataset.addSeries(series);
+		} catch(Exception e) {
+			System.err.println(e);
+		}
+
+		return dataset;
+	}
 	
 	static int askOption(){
 		
