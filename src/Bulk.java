@@ -9,6 +9,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Scanner;
+import java.io.*;
 
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.ChartFactory; 
@@ -524,7 +525,11 @@ public class Bulk {
 			int width = 560;    /* Width of the image */
 			int height = 370;   /* Height of the image */ 
 			File pieChart = new File( "Pie_Chart.jpeg" );
-			ChartUtilities.saveChartAsJPEG( pieChart , chart , width , height );
+			try {
+				ChartUtilities.saveChartAsJPEG( pieChart , chart , width , height );
+			} catch (Exception e) {
+				System.err.println(e.getMessage());
+			}
 			
 		} catch (SQLException e) {
 			System.out.println("Error connecting to db");
