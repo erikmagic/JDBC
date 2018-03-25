@@ -524,16 +524,18 @@ public class Bulk {
 			
 			ResultSet resultSet = stat.executeQuery(query);
 			// close
-			stat.close();
-			con.close();
+
 
 			DefaultPieDataset dataset = new DefaultPieDataset( );
 			
 			while( resultSet.next( ) ) {
 			dataset.setValue( 
-			resultSet.getString( "city" ) ,
+			resultSet.getString( "country" ) ,
 			Double.parseDouble( resultSet.getString( "counts" )));
 			}
+
+			stat.close();
+			con.close();
 			
 			JFreeChart chart = ChartFactory.createPieChart(
 			"Hotel locations",   // chart title           
@@ -566,11 +568,8 @@ public class Bulk {
 			String query = "select departingdate, price from flight";
 			
 			ResultSet resultSet = stat.executeQuery(query);
-			// close
-			stat.close();
-			con.close();
 
-			XYDataset dataset = createXYDataset(resultSet);
+			XYDataset dataset = createXYDataset(resultSet, con, stat);
 			
 			JFreeChart chart = ChartFactory.createScatterPlot(
 			"Flight cost against month",
@@ -592,9 +591,9 @@ public class Bulk {
 		}	
 	}
 
-	static XYDataset createXYDataset(ResultSet resultSet) {
+	static XYDataset createXYDataset(ResultSet resultSet, Connection con, Statement stat ) {
 		XYSeriesCollection dataset = new XYSeriesCollection();
-		DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 		XYSeries series = new XYSeries("flights");
 
 		try {
@@ -604,10 +603,11 @@ public class Bulk {
 			Double.parseDouble( resultSet.getString( "price" )));
 		}
 		dataset.addSeries(series);
+		stat.close();
+		con.close();
 		} catch(Exception e) {
 			System.err.println(e);
 		}
-
 		return dataset;
 	}
 	
